@@ -16,14 +16,38 @@ Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di 
 
 - Descrizione delle principali funzionalità del progetto:
 - Registrazione
-    - Registrazione Cliente:
-    - Registrazione Admin
+    - Registrazione Cliente: Effettuabile dalla pagina principale, è richiesto un username e mail univoci, e una password.
+    - Registrazione Admin: Effettuabile solo dalla pagina Privata di registrazione di un altro admin, è richiesto un username e mail univoci, e una password.
+
+      
 - Login
-    - Login Cliente:
-    - Login Admin:
-- Secondo Fattore di Autenticazione: 
+    - Login Cliente: Effettuabile dalla pagina principale, è richiesto l'username e password dell'utente.
+    - Login Admin:  Effettuabile dalla pagina principale e dalla pagina di Login privata di un admin, è richiesto l'username e password dell'utente.
+
+      
+- Secondo Fattore di Autenticazione: il secondo fattore è la mail. Il codice generato dal sistema viene inviato alla mail dell'utente che tenta di accedere al sito con le sue credenziali dopo aver superato con successo il primo fattore.
 
 ## Struttura Database Altervista
+
+Parte del Diagramma E-R del database che riguarda l'autenticazione:
+
+![Diagramma senza titolo drawio](https://github.com/Thi-Perera/2FA-access-for-Admins-/assets/99124492/4fd84616-9a30-4743-b08f-f62739d824bb)
+
+- Utente:
+    - username: nome dell'utente.
+    - mail: mail dell'utente.
+    - password: password per l'accesso dell'utente.
+    - Ruolo: per distinguere un cliente da un Admin( Cliente con privilegi in più)
+    - id_utente: che identifica univocamente ogni utente.
+    - 
+- 2FA_auth:
+    - 2FA_code: codice 2fa criptato con algoritmo Bcrypt.
+    - 2FA_EXPIRE: data di scadenza del codice 2fa (900 secondi dopo la sua creazione).
+    - 2FA_usage: campo status del codice 2fa(usato, non usato).
+    - id_utente:  per identificare a quale utente (con ruolo=Admin) appartiene il codice 2fa.
+
+  
+
 
 Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di gestione di un e-commerce.
 
