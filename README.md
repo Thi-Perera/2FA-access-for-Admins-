@@ -14,28 +14,28 @@ Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di 
 
 ## Funzionalità Principali
 
-- Descrizione delle principali funzionalità del progetto (es. registrazione, autenticazione a due fattori, recupero password).
-- Puoi aggiungere una lista puntata o una tabella per organizzare le funzionalità.
+- Descrizione delle principali funzionalità del progetto:
+- Registrazione
+    - Registrazione Cliente:
+    - Registrazione Admin
+- Login
+    - Login Cliente:
+    - Login Admin:
+- Secondo Fattore di Autenticazione: 
 
-## Istruzioni per l'Installazione
+## Struttura Database Altervista
 
-- Spiegazione dettagliata su come installare e configurare il progetto.
-- Include dipendenze esterne, comandi per l'installazione e configurazione.
+Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di gestione di un e-commerce.
 
-## Guida Utente
+## Struttura pagine web
 
-- Spiegazione dettagliata su come utilizzare il progetto.
-- Include istruzioni sull'autenticazione a due fattori, come ricevere il codice, ecc.
+Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di gestione di un e-commerce.
 
-## Struttura del Progetto
-
-- Descrizione della struttura delle cartelle e dei file nel progetto.
-- Puoi aggiungere un albero delle directory o una descrizione testuale.
-
-## Esempio di Codice
+## Script principali
 
 ```php
 <?php
 // Esempio di codice PHP relativo a una funzionalità specifica.
 // Puoi aggiungere più blocchi di codice per mostrare diverse parti del progetto.
 ?>
+```
