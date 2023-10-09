@@ -53,13 +53,163 @@ Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di 
 
 ## Struttura pagine web
 
-Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di gestione di un e-commerce.
+Lista Pagine:
+ - account-page.html: Pagina principare che contiene il form per la registrazione dei clienti e il login per cliente e Admin.
+ - login.php: Comunica con il db per verificare i dati inseriti per la prima autenticazione, reindirizza gli admin a 2fa_codegeneration.php.
+ - 2fa_codegeneration.php: Contiene il Form per l'autenticazione per il secondo fattore, reindirizza a 2fa_verify.
+ - 2fa_verify.php: verifica il codice 2fa inserito dall'utente, reindirizza al sito se l'autenticazione va a buon fine.
 
 ## Script principali
 
+### verifica del primo fattore
+
+login.php
 ```php
 <?php
-// Esempio di codice PHP relativo a una funzionalità specifica.
-// Puoi aggiungere più blocchi di codice per mostrare diverse parti del progetto.
+require_once('config.php');// connessione al db con my_sqli
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // dati passati dal form, senza il rischio di sql injection
+    $username = $connessione->real_escape_string($_POST['username']);
+    $password = $connessione->real_escape_string($_POST['password']);
+
+    $sql_select = "SELECT * FROM utente WHERE username = '$username' ";
+    $result = $connessione->query($sql_select);
+
+    // routine verifica accesso e ruolo dell'utente
+    if ($result->num_rows == 1) {
+        $row = $result->fetch_assoc();
+        if (password_verify($password, $row['password'])) {
+            session_start();
+            if ($row['ruolo'] == 'Admin') {// login Admin
+
+                // creazione 2fa code
+                $code_2fa = strval(mt_rand(100000000, 999999999));
+                $hashed_code_2fa = password_hash($code_2fa, PASSWORD_BCRYPT);
+                $id_utente = $row['id_utente'];
+
+                // salvataggio 2fa code in db
+                $update_query = "UPDATE 2FA_auth SET 2FA_code = ?, 2FA_expire = ADDTIME(CURRENT_TIMESTAMP,900), 2FA_code_usage = 'NOT_USED' WHERE id_utente = ?";
+                $stmt = $connessione->prepare($update_query);
+                $stmt->bind_param("si", $hashed_code_2fa, $id_utente);
+                $stmt->execute();
+
+                // Invia l'email con 2fa code 
+                $emailto = $row['email'];
+
+
+                $subject = "Libriperera Login";
+                $message = "Here your code for Admin Authentication in Libriperera!\n\n 2fa code: $code_2fa \n\n This code expires in 15 minutes";
+                $headers = "From: libriperera@booksite.com";
+                mail($emailto, $subject, $message, $headers);
+
+                // Redirect per la verifica del 2fa code
+
+                $emailCensurata = censuraEmail($emailto); // Censurare l'email con asterischi tranne le prime due lettere
+                header("Location: admin/2fa_codegeneration.php?username=" . urlencode($row['username']) . "&id_utente=" . urlencode($row['id_utente']) . "&code_2fa=" . urlencode($code_2fa) . "&hashed_code_2fa=" . urlencode($hashed_code_2fa) . "&emailCensurata=" . urlencode($emailCensurata));
+                exit();
+
+            } elseif ($row['ruolo'] == 'Cliente') {// login cliente
+                $_SESSION['loggato'] = true;
+                $_SESSION['id_cliente'] = $row['id_utente'];
+                $_SESSION['username'] = $row['username'];
+                header("location: home.php");
+                exit();
+            }
+
+        // routine accesso errato
+        } else {
+            header("location: error-page/nopassword.html");
+            exit();
+        }
+    } else {
+        header("location: error-page/nousername.html");
+        exit();
+    }
+}
+
+$connessione->close();
 ?>
+
+```
+
+### verifica del secondo fattore
+
+2fa_verify.php
+```php
+<?php
+// connessione al db
+require("inc/db.php");
+
+// Dati passati da form
+$idutente = $_POST['id_utente'];
+$code_2fa = $_POST['code_2fa'];
+
+// Hashing del codice 2FA con Bcrypt
+$hashed_code_2fa = password_hash($code_2fa, PASSWORD_BCRYPT);
+
+// routine di verifica del 2FA code per l'utente che sta cercando di accedere a suo account.
+$query = $conn->prepare("SELECT * FROM 2FA_auth WHERE id_utente = :idutente AND 2FA_EXPIRE > CURRENT_TIMESTAMP");
+$query->bindParam(":idutente", $idutente);
+$query->execute();
+$response = array();
+if ($query->rowCount() > 0) {
+    $row = $query->fetch(PDO::FETCH_ASSOC);
+    if (password_verify($code_2fa, $row['2FA_code']) && ($row['2FA_code_usage'] != 'USED')) {
+
+        $response = array("success" => true);
+        // Codice 2FA corretto, aggiorna il database e impostazioni di sessione
+        $query2 = $conn->prepare("UPDATE 2FA_auth SET 2FA_code_usage = 'USED' WHERE id_utente = :idutente AND 2FA_EXPIRE > CURRENT_TIMESTAMP");
+        $query2->bindParam(":idutente", $idutente);
+        $query2->execute();
+        session_start();
+        $_SESSION['loggato2'] = true;
+        $_SESSION['loggato'] = true;
+        $_SESSION['id_cliente'] = $idutente;
+        $_SESSION['username'] = $row['username'];
+        
+    } else { // gestione codice errato
+        if($row['2FA_code_usage'] == 'USED'){
+            $response = array("success" => false, "message" => "Codice Usato o errato");
+
+            header('Content-Type: application/json'); 
+
+        } else{
+
+            $response = array("success" => false, "message" => "Codice Errato");
+            header('Content-Type: application/json'); 
+
+        }
+    }
+} else {
+    if($row['2FA_EXPIRE'] < time()){
+    
+        $response = array("success" => false, "message" => "Codice scaduto");
+        header('Content-Type: application/json'); 
+
+    }else{ 
+        
+        $response = array("success" => false, "message" => "Codice errato");
+        header('Content-Type: application/json');
+
+     }    
+}
+echo json_encode($response);
+exit;
+?>
+```
+
+### Funzioni particolari
+funzione per la censurare parzialmente la mail per suggerire all'utente a quale mail è stata inviato il codice 2fa.
+    
+```php
+function censuraEmail($email) { // funziona per censurare parzialmente le mail
+    list($parteLocale, $dominio) = explode('@', $email);
+    $primeDueLettere = substr($parteLocale, 0, 2);
+    $lunghezzaParteLocale = strlen($parteLocale) - 2;
+    $asterischi = str_repeat('*', $lunghezzaParteLocale);
+    $emailCensurata = $primeDueLettere . $asterischi . '@' . $dominio;
+    return $emailCensurata;
+}
+
 ```
