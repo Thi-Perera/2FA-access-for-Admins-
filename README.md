@@ -103,7 +103,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 $headers = "From: libriperera@booksite.com";
                 mail($emailto, $subject, $message, $headers);
 
-                // Redirect per la verifica del 2fa code
+                // Redirect al form del secondo fattore di autenticazione
 
                 $emailCensurata = censuraEmail($emailto); // Censurare l'email con asterischi tranne le prime due lettere
                 header("Location: admin/2fa_codegeneration.php?username=" . urlencode($row['username']) . "&id_utente=" . urlencode($row['id_utente']) . "&code_2fa=" . urlencode($code_2fa) . "&hashed_code_2fa=" . urlencode($hashed_code_2fa) . "&emailCensurata=" . urlencode($emailCensurata));
