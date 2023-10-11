@@ -46,11 +46,24 @@ Parte del Diagramma E-R del database che riguarda l'autenticazione:
     - 2FA_usage: campo status del codice 2fa(usato, non usato).
     - id_utente:  per identificare a quale utente (con ruolo=Admin) appartiene il codice 2fa.
 
-  
+### trigger nel database
 
 
-Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di gestione di un e-commerce.
+All'inserimento di una nuova riga nella tabella 'utente' con il campo 'ruolo' = 'Admin' (Registrazione al sito di un nuovo amministratore) viene creata automaticamente una riga nella tabella '2fa_auth' con dei valori di dafault, in attesa di essere modificati al primo accesso del nuovo admin.
 
+
+```sql
+
+CREATE TRIGGER `after_insert_admin` AFTER INSERT ON `utente`
+ FOR EACH ROW BEGIN
+    IF NEW.ruolo = 'Admin' THEN
+        INSERT INTO 2FA_auth (id_utente, 2FA_code, 2FA_expire, 2FA_code_usage)
+        VALUES (NEW.id_utente, 'CODE_NOT_GENERATED_YET', CURRENT_TIMESTAMP, 'NOT_USED');
+    END IF;
+END
+
+```
+    
 ## Struttura pagine web
 
 Lista Pagine:
