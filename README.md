@@ -55,8 +55,8 @@ Autenticazione a due fattori per l'accesso da amministratore all'interfaccia di 
 
 Lista Pagine:
  - account-page.html: Pagina principare che contiene il form per la registrazione dei clienti e il login per cliente e Admin.
- - login.php: Comunica con il db per verificare i dati inseriti per la prima autenticazione, reindirizza gli admin a 2fa_codegeneration.php.
- - 2fa_codegeneration.php: Contiene il Form per l'autenticazione per il secondo fattore, reindirizza a 2fa_verify.
+ - login.php: Comunica con il db per verificare i dati inseriti per la prima autenticazione, reindirizza gli admin a 2fa_form.php.
+ - 2fa_form.php: Contiene il Form per l'autenticazione per il secondo fattore, reindirizza a 2fa_verify.
  - 2fa_verify.php: verifica il codice 2fa inserito dall'utente, reindirizza al sito se l'autenticazione va a buon fine.
 
 ## Script principali
@@ -106,7 +106,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 // Redirect al form del secondo fattore di autenticazione
 
                 $emailCensurata = censuraEmail($emailto); // Censurare l'email con asterischi tranne le prime due lettere
-                header("Location: admin/2fa_codegeneration.php?username=" . urlencode($row['username']) . "&id_utente=" . urlencode($row['id_utente']) . "&code_2fa=" . urlencode($code_2fa) . "&hashed_code_2fa=" . urlencode($hashed_code_2fa) . "&emailCensurata=" . urlencode($emailCensurata));
+                header("Location: admin/2fa_form.php?username=" . urlencode($row['username']) . "&id_utente=" . urlencode($row['id_utente']) . "&code_2fa=" . urlencode($code_2fa) . "&hashed_code_2fa=" . urlencode($hashed_code_2fa) . "&emailCensurata=" . urlencode($emailCensurata));
                 exit();
 
             } elseif ($row['ruolo'] == 'Cliente') {// login cliente
